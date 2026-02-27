@@ -29,21 +29,15 @@ def process_pdf(pdf_path, address_dropdown, owner_name):
         # 調整時，可以使用 page.rect 確認整體寬高
         rect = fitz.Rect(100, 200, 500, 400) # 假設區塊
         
-        # 將該區域渲染為圖片 (放大倍率以提高 OCR 辨識率)
-        zoom_x = 2.0  # horizontal zoom
-        zoom_y = 2.0  # vertical zoom
-        mat = fitz.Matrix(zoom_x, zoom_y)
-        pix = page.get_pixmap(matrix=mat, clip=rect)
-        
-        # 將 pixmap 轉為 PIL Image
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
-        # 進行 OCR 辨識 (限定繁體中文 chi_tra)
-        # 確保系統有安裝 tesseract 且包含 chi_tra
-        text = pytesseract.image_to_string(img, lang='chi_tra')
+        # 改用 PyMuPDF 的文字提取功能 (因為 PDF 是系統產生的，通常包含可選取的文字內容)
+        text = page.get_text("text", clip=rect)
         
         # 清理文字：去除多餘換行、空白
         clean_text = re.sub(r'\s+', '', text)
+        
+        # 如果無法用文字提取（純圖 PDF），或是提取結果空白，則退回提示
+        if not clean_text:
+            clean_text = "[無文字或需使用OCR提取]"
         
         # 寫入 CSV
         csv_file = "output.csv"
