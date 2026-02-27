@@ -32,12 +32,16 @@ def process_pdf(pdf_path, address_dropdown, owner_name):
         # 改用 PyMuPDF 的文字提取功能 (因為 PDF 是系統產生的，通常包含可選取的文字內容)
         text = page.get_text("text", clip=rect)
         
-        # 清理文字：去除多餘換行、空白
+        # 清除所有空白與換行以方便正則比對
         clean_text = re.sub(r'\s+', '', text)
         
-        # 如果無法用文字提取（純圖 PDF），或是提取結果空白，則退回提示
-        if not clean_text:
-            clean_text = "[無文字或需使用OCR提取]"
+        # 尋找 "地址" 和 "權利範圍" 之間的字串
+        match = re.search(r'地址(.*?)權利範圍', clean_text)
+        if match:
+            extracted_address = match.group(1)
+        else:
+            # 若無匹配或內容為空
+            extracted_address = clean_text if clean_text else "[無文字或需使用OCR提取]"
         
         # 寫入 CSV
         csv_file = "output.csv"
@@ -46,12 +50,12 @@ def process_pdf(pdf_path, address_dropdown, owner_name):
         new_row = pd.DataFrame([{
             "下拉選單地址": address_dropdown,
             "所有權人姓名": owner_name,
-            "擷取到的地址文字": clean_text
+            "擷取到的地址文字": extracted_address
         }])
         
         # a=append mode
         new_row.to_csv(csv_file, mode='a', index=False, header=not file_exists, encoding='utf-8-sig')
-        print(f"Success: {pdf_path} 處理完成 -> {clean_text}")
+        print(f"Success: {pdf_path} 處理完成 -> {extracted_address}")
         
     except Exception as e:
         print(f"發生錯誤 {pdf_path}: {e}")
