@@ -9,7 +9,7 @@ import re
 # 如果系統環境沒有將 tesseract 加入 PATH，可能需要指定安裝路徑
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-def process_pdf(pdf_path, address_dropdown, owner_name):
+def process_pdf(pdf_path, address_dropdown, owner_name, community_name="output"):
     """
     處理單一 PDF，截取第二頁特定區塊進行 OCR。
     預計：擷取『建物所有權部』的地址欄位。
@@ -44,7 +44,7 @@ def process_pdf(pdf_path, address_dropdown, owner_name):
             extracted_address = clean_text if clean_text else "[無文字或需使用OCR提取]"
         
         # 寫入 CSV
-        csv_file = "output.csv"
+        csv_file = f"{community_name}.csv"
         file_exists = os.path.isfile(csv_file)
         
         new_row = pd.DataFrame([{
@@ -61,11 +61,12 @@ def process_pdf(pdf_path, address_dropdown, owner_name):
         print(f"發生錯誤 {pdf_path}: {e}")
 
 if __name__ == "__main__":
-    # 使用範例: python process_pdf.py "C:\path\to\file.pdf" "新北市淡水區XX路" "王大明"
+    # 使用範例: python process_pdf.py "C:\path\to\file.pdf" "新北市淡水區XX路" "王大明" "Hi-City"
     if len(sys.argv) >= 4:
         pdf_file = sys.argv[1]
         addr = sys.argv[2]
         owner = sys.argv[3]
-        process_pdf(pdf_file, addr, owner)
+        community = sys.argv[4] if len(sys.argv) > 4 else "output"
+        process_pdf(pdf_file, addr, owner, community)
     else:
-        print("Usage: python process_pdf.py <pdf_path> <address_dropdown> <owner_name>")
+        print("Usage: python process_pdf.py <pdf_path> <address_dropdown> <owner_name> [community_name]")
